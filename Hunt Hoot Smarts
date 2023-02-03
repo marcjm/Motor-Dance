@@ -1,0 +1,61 @@
+
+import machine
+
+import time
+
+from motorController import *
+
+
+adc_pin = machine.Pin(28) # A3
+
+adc = machine.ADC(adc_pin)
+
+
+
+
+reading = adc.read_u16() 
+array = []
+
+t=4
+while t>0: 
+    reading = adc.read_u16() 
+    array.append(reading)
+    print ("ADC: ",array)
+
+    #print("ADC: ",reading)
+    
+    time.sleep_ms(200)
+    t=t-0.1
+    
+n = min(array)
+m = max(array)
+
+print(n)
+print(m)
+
+d = (m-n)/180 #brightness of light value needed to move a servo motor by one increment in the trained range
+
+board = NanoMotorBoard() # start of servo code
+print("reboot")
+board.reboot()
+time.sleep_ms(500)
+
+servos = []
+for i in range(2):
+    servos.append(Servo(i))
+
+servos2 = []
+for i in range(2):
+    servos2.append(Servo(2+i))
+    
+while True:
+    reading = adc.read_u16() 
+    f = int((reading-n)/d) #average range of values between max and min over 27 intervals (servo motor range)
+    print(f)
+    for i in range(f):
+        for servo in servos:
+            reply = servo.setAngle(i)
+    for i in range(180,180-f,-1):    
+        for servo in servos2:
+            reply = servo.setAngle(i)
+    time.sleep_ms(200)
